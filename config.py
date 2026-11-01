@@ -1,1 +1,17 @@
+APP_NAME = "ResearchLens AI"
 
+MAX_FILE_SIZE_MB = 15
+
+MAX_DOCUMENT_WORDS = 150000
+
+SUMMARY_SENTENCES = {
+    "Short": 5,
+    "Medium": 10,
+    "Detailed": 20
+}
+
+MAX_QUESTIONS = 15
+
+TOP_KEYWORDS = 20
+
+MAX_RETRIEVED_SENTENCES = 5
