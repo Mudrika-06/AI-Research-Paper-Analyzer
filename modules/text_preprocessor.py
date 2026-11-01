@@ -1,108 +1,42 @@
-import re
+import os
 import nltk
 
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
+# Store NLTK data in a writable directory
+NLTK_DATA_DIR = "/tmp/nltk_data"
+
+os.makedirs(NLTK_DATA_DIR, exist_ok=True)
+
+if NLTK_DATA_DIR not in nltk.data.path:
+    nltk.data.path.append(NLTK_DATA_DIR)
 
 
 def setup_nltk():
+    """Download required NLTK resources if they are missing."""
 
     resources = {
         "tokenizers/punkt": "punkt",
         "tokenizers/punkt_tab": "punkt_tab",
         "corpora/stopwords": "stopwords",
         "corpora/wordnet": "wordnet",
-        "corpora/omw-1.4": "omw-1.4"
+        "corpora/omw-1.4": "omw-1.4",
     }
 
-    for path, package in resources.items():
-
+    for resource_path, package_name in resources.items():
         try:
-            nltk.data.find(path)
-
+            nltk.data.find(resource_path)
         except LookupError:
-
             try:
-                nltk.download(
-                    package,
+                success = nltk.download(
+                    package_name,
+                    download_dir=NLTK_DATA_DIR,
                     quiet=True
                 )
-            except Exception:
-                pass
 
+                if not success:
+                    print(f"Could not download NLTK resource: {package_name}")
 
-def clean_text(text):
+            except Exception as error:
+                print(f"NLTK download error ({package_name}): {error}")
 
-    text = re.sub(
-        r'\s+',
-        ' ',
-        text
-    )
-
-    text = re.sub(
-        r'[^\w\s.,!?;:()-]',
-        ' ',
-        text
-    )
-
-    return text.strip()
-
-
-def get_sentences(text):
-
-    setup_nltk()
-
-    text = clean_text(text)
-
-    try:
-
-        return [
-            s.strip()
-            for s in sent_tokenize(text)
-            if len(s.split()) > 3
-        ]
-
-    except LookupError:
-
-        return [
-            s.strip()
-            for s in re.split(r'(?<=[.!?])\s+', text)
-            if len(s.split()) > 3
-        ]
-
-
-def preprocess_text(text):
-
-    setup_nltk()
-
-    try:
-
-        stop_words = set(
-            stopwords.words("english")
-        )
-
-    except LookupError:
-
-        stop_words = set()
-
-    lemmatizer = WordNetLemmatizer()
-
-    words = word_tokenize(
-        clean_text(text).lower()
-    )
-
-    processed = []
-
-    for word in words:
-
-        if word.isalpha() and word not in stop_words:
-
-            try:
-                processed.append(
-                    lemmatizer.lemmatize(word)
-                )
-            except LookupError:
-                processed.append(word)
-
-    return processed
+    return True
+    
