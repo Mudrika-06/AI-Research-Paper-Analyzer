@@ -1,57 +1,53 @@
+
 import fitz
 
 
-def extract_pdf_pages(pdf_file):
-
-    pages = []
+def extract_pdf_text(uploaded_file):
+    """Extract text and page information from a PDF."""
 
     try:
+        pdf_bytes = uploaded_file.getvalue()
 
-        pdf = fitz.open(
-            stream=pdf_file,
+        if not pdf_bytes:
+            raise ValueError("The uploaded PDF is empty.")
+
+        document = fitz.open(
+            stream=pdf_bytes,
             filetype="pdf"
         )
 
-        for index, page in enumerate(pdf):
+        pages = []
+        all_text = []
 
-            text = page.get_text("text")
+        for page_number, page in enumerate(document, start=1):
+            page_text = page.get_text("text").strip()
 
-            if text.strip():
+            pages.append({
+                "page": page_number,
+                "text": page_text
+            })
 
-                pages.append({
-                    "page": index + 1,
-                    "text": text.strip()
-                })
+            if page_text:
+                all_text.append(page_text)
 
-        pdf.close()
+        page_count = len(document)
+        document.close()
+
+        full_text = "\n\n".join(all_text)
+
+        if not full_text.strip():
+            raise ValueError(
+                "No selectable text was found. "
+                "This may be a scanned PDF. OCR is not included."
+            )
+
+        return {
+            "name": uploaded_file.name,
+            "text": full_text,
+            "pages": pages,
+            "page_count": page_count,
+            "word_count": len(full_text.split())
+        }
 
     except Exception as error:
-
-        raise ValueError(
-            f"Unable to read PDF: {error}"
-        )
-
-    if not pages:
-
-        raise ValueError(
-            "No readable text found in PDF. "
-            "Scanned PDFs require OCR."
-        )
-
-    return pages
-
-
-def get_document_statistics(pages):
-
-    text = " ".join(
-        page["text"] for page in pages
-    )
-
-    words = text.split()
-
-    return {
-        "pages": len(pages),
-        "words": len(words),
-        "characters": len(text),
-        "paragraphs": len(text.split("\n\n"))
-    }
+        raise ValueError(f"PDF processing failed: {error}")
