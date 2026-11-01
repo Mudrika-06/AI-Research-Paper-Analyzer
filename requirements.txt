@@ -1,1 +1,8 @@
-
+streamlit
+PyMuPDF
+nltk
+scikit-learn
+numpy
+sumy
+python-docx
+pandas
