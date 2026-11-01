@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+from modules.text_preprocessor import setup_nltk
+
+setup_nltk()
 
 from modules.pdf_processor import (
     extract_pdf_pages,
