@@ -1,43 +1,71 @@
 
-from modules.text_preprocessor import setup_nltk
-
-setup_nltk()
-
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
-from sumy.summarizers.text_rank import TextRankSummarizer
-from sumy.utils import get_stop_words
+import re
+from sklearn.feature_extraction.text import TfidfVectorizer
+from modules.text_preprocessor import get_sentences
 
 
 def summarize_text(text, sentence_count=5):
-    """Generate an extractive summary from document text."""
+    """Generate an extractive summary using TF-IDF sentence scoring."""
 
     if not text or not text.strip():
-        return "No readable text found in the document."
+        return "No readable text found in the research paper."
+
+    sentences = get_sentences(text)
+
+    if not sentences:
+        return text[:1500]
+
+    if len(sentences) <= sentence_count:
+        return " ".join(sentences)
 
     try:
-        parser = PlaintextParser.from_string(
-            text,
-            Tokenizer("english")
+        vectorizer = TfidfVectorizer(
+            stop_words="english",
+            max_features=5000
         )
 
-        summarizer = TextRankSummarizer()
-        summarizer.stop_words = get_stop_words("english")
+        matrix = vectorizer.fit_transform(sentences)
 
-        summary_sentences = summarizer(
-            parser.document,
-            sentence_count
+        # Score each sentence by its average TF-IDF weight.
+        scores = matrix.sum(axis=1).A1
+
+        # Give a small preference to sentences with useful length.
+        adjusted_scores = []
+
+        for sentence, score in zip(sentences, scores):
+            word_count = len(sentence.split())
+
+            if word_count < 5:
+                score *= 0.5
+            elif word_count > 60:
+                score *= 0.85
+
+            adjusted_scores.append(score)
+
+        ranked_indices = sorted(
+            range(len(sentences)),
+            key=lambda index: adjusted_scores[index],
+            reverse=True
         )
 
-        if not summary_sentences:
-            return "Not enough text to generate a summary."
+        selected_indices = sorted(
+            ranked_indices[:max(1, sentence_count)]
+        )
 
-        return " ".join(str(sentence) for sentence in summary_sentences)
+        summary = " ".join(
+            sentences[index] for index in selected_indices
+        )
+
+        return summary if summary.strip() else "Unable to generate summary."
+
+    except ValueError:
+        # Fallback for text that cannot be vectorized.
+        return " ".join(sentences[:sentence_count])
 
     except Exception as error:
         return f"Summary generation failed: {error}"
 
 
-# Backward-compatible function name
+# Support both names used by earlier versions of the app.
 def generate_summary(text, sentence_count=5):
     return summarize_text(text, sentence_count)
