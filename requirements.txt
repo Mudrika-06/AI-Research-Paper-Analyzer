@@ -1,8 +1,5 @@
-streamlit
-PyMuPDF
-nltk
-scikit-learn
-numpy
-sumy
-python-docx
-pandas
+streamlit>=1.40,<2.0
+PyMuPDF>=1.24
+scikit-learn>=1.5
+numpy>=1.26
+python-docx>=1.1
