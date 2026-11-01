@@ -1,37 +1,40 @@
-from modules.text_preprocessor import clean_text
-from sklearn.feature_extraction.text import TfidfVectorizer
 
-def extract_keywords(text, top_n=20):
+from sklearn.feature_extraction.text import TfidfVectorizer
+from modules.text_preprocessor import clean_text
+
+
+def extract_keywords(text, top_n=15):
 
     text = clean_text(text)
 
-    if len(text.split()) < 5:
+    if not text.strip():
         return []
 
-    vectorizer = TfidfVectorizer(
-        stop_words="english",
-        ngram_range=(1, 2),
-        max_features=3000
-    )
-
     try:
-
-        matrix = vectorizer.fit_transform(
-            [text]
+        vectorizer = TfidfVectorizer(
+            stop_words="english",
+            ngram_range=(1, 2),
+            max_features=3000
         )
 
+        matrix = vectorizer.fit_transform([text])
+
         scores = matrix.toarray()[0]
+        terms = vectorizer.get_feature_names_out()
 
-        features = vectorizer.get_feature_names_out()
-
-        results = sorted(
-            zip(features, scores),
-            key=lambda x: x[1],
+        ranked = sorted(
+            zip(terms, scores),
+            key=lambda item: item[1],
             reverse=True
         )
 
-        return results[:top_n]
+        return [
+            {
+                "keyword": term,
+                "score": round(float(score), 4)
+            }
+            for term, score in ranked[:top_n]
+        ]
 
     except ValueError:
-
         return []
