@@ -1,7 +1,5 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-
 from modules.text_preprocessor import clean_text
-
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 def extract_keywords(text, top_n=20):
 
