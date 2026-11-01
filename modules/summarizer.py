@@ -1,6 +1,6 @@
+
 from modules.text_preprocessor import setup_nltk
 
-# Download tokenizer resources before importing/using Sumy
 setup_nltk()
 
 from sumy.parsers.plaintext import PlaintextParser
@@ -9,7 +9,8 @@ from sumy.summarizers.text_rank import TextRankSummarizer
 from sumy.utils import get_stop_words
 
 
-def generate_summary(text, sentence_count=5):
+def summarize_text(text, sentence_count=5):
+    """Generate an extractive summary from document text."""
 
     if not text or not text.strip():
         return "No readable text found in the document."
@@ -34,4 +35,9 @@ def generate_summary(text, sentence_count=5):
         return " ".join(str(sentence) for sentence in summary_sentences)
 
     except Exception as error:
-        return f"Summary generation failed: {str(error)}"
+        return f"Summary generation failed: {error}"
+
+
+# Backward-compatible function name
+def generate_summary(text, sentence_count=5):
+    return summarize_text(text, sentence_count)
